@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>燕遇 · YAN YU - 匠心滋补 · 溯源印尼</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --caramel: #AF7E5A;
+            --cocoa: #3D2B1F;
+            --cream: #FBF7F2;
+        }
+
+        body {
+            background-color: var(--cream);
+            color: var(--cocoa);
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-serif { font-family: 'Noto Serif SC', serif; }
+
+        /* 玻璃拟态底部导航 */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* 弹窗核心逻辑 */
+        .modal-container {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-container.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-inner {
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .active .modal-inner {
+            transform: translateY(0);
+        }
+
+        /* 画廊滚动 */
+        .carousel-snap { 
+            scroll-snap-type: x mandatory; 
+            display: flex;
+            overflow-x: auto;
+        }
+        .carousel-item { 
+            scroll-snap-align: start; 
+            flex: 0 0 100%; 
+            height: 300px;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* 指示点 */
+        .dot { height: 4px; width: 4px; border-radius: 2px; background: rgba(0,0,0,0.1); transition: all 0.3s; }
+        .dot.active { width: 16px; background: var(--caramel); }
+
+        /* 表格优化 */
+        .custom-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .custom-table th {
+            background: rgba(175, 126, 90, 0.1);
+            color: var(--caramel);
+            padding: 1rem 0.5rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        .custom-table td {
+            background: white;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        .custom-table tr:nth-child(even) td {
+            background: #fafafa;
+        }
+        
+        .badge-step {
+            background: var(--caramel);
+            color: white;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .prose h4 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="pb-32">
+
+    <!-- 顶部 -->
+    <nav class="fixed w-full z-50 bg-[#FBF7F2]/80 backdrop-blur-lg border-b border-[#AF7E5A]/10 px-6 h-20 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-[#AF7E5A] rounded-full flex items-center justify-center text-white font-serif text-lg shadow-lg">燕</div>
+                <span class="text-xl font-bold tracking-tight">燕遇 · YAN YU</span>
+            </div>
+            <button onclick="openModal('modal-contact')" class="bg-[#3D2B1F] text-white px-5 py-2 rounded-full text-sm font-medium">联系咨询</button>
+        </div>
+    </nav>
+
+    <!-- Header (更新宣传语) -->
+    <header class="pt-36 pb-16 px-8 text-center">
+        <h1 class="text-5xl md:text-6xl font-serif mb-4 leading-tight">
+            拾一盏 <br> <span class="text-[#AF7E5A]">时光滋味</span>
+        </h1>
+        <p class="text-lg md:text-xl font-medium tracking-[0.2em] text-[#AF7E5A] max-w-xs mx-auto">
+            匠心滋补 · 溯源印尼
+        </p>
+    </header>
+
+    <!-- 价目表区域 -->
+    <section class="px-4 max-w-7xl mx-auto mb-10">
+        <div class="bg-[#3D2B1F] rounded-[3rem] p-6 md:p-12 shadow-2xl">
+            <div class="flex items-baseline gap-3 mb-10">
+                <h2 class="text-3xl font-serif text-[#AF7E5A]">甄选*溯源燕窝·价目表</h2>
+                <span class="text-[10px] text-white/30 tracking-widest uppercase">Select Price List</span>
+            </div>
+            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- 产品卡片由 JS 加载 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= 弹窗内容还原区 ================= -->
+
+    <!-- 1. 产品详情画廊 -->
+    <div id="modal-gallery" class="modal-container">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" onclick="closeModal('modal-gallery')"></div>
+        <div class="modal-inner absolute bottom-0 left-0 right-0 bg-[#FBF7F2] rounded-t-[3rem] overflow-hidden max-h-[95vh] flex flex-col">
+            <div class="w-12 h-1.5 bg-black/10 mx-auto mt-4 mb-4 rounded-full"></div>
+            <div id="gallery-scroller" class="carousel-snap no-scrollbar bg-gray-200"></div>
+            <div id="gallery-dots" class="flex justify-center gap-1.5 mt-4"></div>
+            <div class="p-8 pb-12 overflow-y-auto no-scrollbar">
+                <h2 id="detail-name" class="text-3xl font-serif text-[#3D2B1F] mb-2"></h2>
+                <div class="flex items-center gap-3 mb-6">
+                    <span id="detail-price" class="text-2xl font-serif text-[#AF7E5A]"></span>
+                    <span class="text-xs opacity-40">元 / 克 (CNY / Gram)</span>
+                </div>
+                <div class="bg-white p-6 rounded-3xl mb-8">
+                    <p id="detail-desc" class="text-sm leading-relaxed opacity-70"></p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openModal('modal-contact')" class="flex-1 bg-[#AF7E5A] text-white py-4 rounded-2xl font-bold shadow-xl">咨询订购</button>
+                    <button onclick="closeModal('modal-gallery')" class="px-6 py-4 rounded-2xl border border-black/5 font-medium">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 燕窝分类图 -->
+    <div id="modal-category" class="modal-container">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal('modal-category')"></div>
+        <div class="modal-inner absolute bottom-0 left-0 right-0 bg-white rounded-t-[3rem] max-h-[85vh] overflow-y-auto no-scrollbar">
+            <div class="w-12 h-1.5 bg-black/10 mx-auto mt-4 mb-6 rounded-full"></div>
+            <div class="px-8 pb-12 text-center">
+                <h3 class="text-2xl font-serif mb-2 text-[#3D2B1F]">一盏一质 · 匠心甄选</h3>
+                <p class="text-xs opacity-40 mb-8 uppercase tracking-widest">Grading Selection Guide</p>
+                <div class="space-y-6">
+                    <div class="relative rounded-3xl overflow-hidden aspect-[16/9] bg-gray-100 shadow-inner">
+                        <img src="https://imgtolinkx.com/i/R6DOw0Wn?auto=format&fit=crop&w=800" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                            <div class="text-left">
+                                <h4 class="text-white font-bold">顶级干挑工艺</h4>
+                                <p class="text-white/70 text-[10px]">保留燕窝原盏形态与高唾液酸含量</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-left">
+                        <div class="bg-gray-50 rounded-3xl p-5 border border-black/5">
+                            <h4 class="font-bold text-[#AF7E5A] text-sm mb-1">精修三角盏</h4>
+                            <p class="text-[9px] opacity-60">形态自然，口感更有弹性。</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-3xl p-5 border border-black/5">
+                            <h4 class="font-bold text-[#AF7E5A] text-sm mb-1">印尼老燕条</h4>
+                            <p class="text-[9px] opacity-60">高性价比，口感丝长分明。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 知识 Q&A (严格还原版) -->
+    <div id="modal-qa" class="modal-container">
+        <div class="absolute inset-0 bg-black/80" onclick="closeModal('modal-qa')"></div>
+        <div class="modal-inner absolute bottom-0 left-0 right-0 bg-white rounded-t-[3rem] p-8 max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div class="w-12 h-1.5 bg-black/10 mx-auto mb-8 rounded-full"></div>
+            <div class="prose max-w-2xl mx-auto pb-12">
+                <h2 class="text-center font-serif text-2xl mb-10">🧐 燕窝基础大揭秘</h2>
+                
+                <div class="space-y-8">
+                    <section>
+                        <h4 class="text-[#AF7E5A] font-bold">Q1：燕窝到底是什么？是燕子的口水吗？</h4>
+                        <p class="text-sm opacity-70">通俗地说，确实是金丝燕的“口水”。是由金丝燕（一种雨燕科鸟类）分泌的唾液混合绒羽、海藻等物质筑成的巢穴。</p>
+                    </section>
+
+                    <section>
+                        <h4 class="text-[#AF7E5A] font-bold">Q2：燕窝的营养价值高吗？它补的到底是什么？</h4>
+                        <div class="text-sm opacity-70 space-y-2">
+                            <p>客观看待：核心营养是<b>唾液酸</b>，含量在 7%-12% 左右。燕窝在补充唾液酸、滋阴润燥方面有其独特性。</p>
+                        </div>
+                    </section>
+
+                    <h2 class="text-center font-serif text-2xl py-6">🍽️ 怎么吃才有效？</h2>
+                    
+                    <section>
+                        <h4 class="text-[#AF7E5A] font-bold">Q3：一天吃多少合适？</h4>
+                        <p class="text-sm opacity-70">推荐用量：每次 <b>3-5克</b> 干燕窝。建议隔天一次，或每周3次。摄入过多反而造成浪费。</p>
+                    </section>
+
+                    <section>
+                        <h4 class="text-[#AF7E5A] font-bold">Q4：什么时候吃燕窝吸收最好？</h4>
+                        <p class="text-sm opacity-70">推荐<b>早晨空腹</b>或<b>晚上睡前</b>食用。此时肠胃吸收能力最强。</p>
+                    </section>
+
+                    <h2 class="text-center font-serif text-2xl py-6">🔍 避坑指南：真假怎么辨？</h2>
+                    <section class="bg-[#3D2B1F] text-white p-6 rounded-[2rem]">
+                        <h4 class="text-[#AF7E5A] font-bold mb-4">记住“看、闻、泡、拉”</h4>
+                        <ul class="text-xs space-y-3 opacity-80">
+                            <li><b>看：</b>不规则丝状结构，有天然缝隙。</li>
+                            <li><b>闻：</b>淡淡的蛋清味。</li>
+                            <li><b>泡：</b>吸水性强，泡发 5-8 倍，水质清。</li>
+                            <li><b>拉：</b>燕丝轻拉有弹性，不应一拉就断。</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 炖煮指南 (严格还原版) -->
+    <div id="modal-cook" class="modal-container">
+        <div class="absolute inset-0 bg-black/80" onclick="closeModal('modal-cook')"></div>
+        <div class="modal-inner absolute bottom-0 left-0 right-0 bg-[#FBF7F2] rounded-t-[3rem] p-8 max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div class="w-12 h-1.5 bg-black/10 mx-auto mb-8 rounded-full"></div>
+            <div class="max-w-2xl mx-auto pb-12">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-serif text-[#3D2B1F] mb-2">燕窝炖煮法则</h2>
+                    <p class="text-[#AF7E5A] italic text-sm">“三分看原料，七分看炖煮”</p>
+                </div>
+
+                <div class="space-y-8">
+                    <section>
+                        <h3 class="font-bold mb-4 flex items-center"><span class="badge-step">1</span> 🥣 泡发（唤醒燕窝）</h3>
+                        <div class="space-y-3 text-sm opacity-80">
+                            <p><b>选对水：</b>推荐<b>纯净水</b>。禁忌自来水或矿泉水。</p>
+                            <p><b>控时间：</b>常温泡 <b>3-4 小时</b>。透明无白芯即可。</p>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold mb-4 flex items-center"><span class="badge-step">2</span> 🔥 炖煮（锁住营养）</h3>
+                        <div class="space-y-3 text-sm opacity-80">
+                            <p><b>隔水炖：</b>密封炖煮，营养流失最少。</p>
+                            <p><b>比例：</b>干燕窝 : 水 ≈ 1 : 20。没过燕窝 1-2 厘米。</p>
+                            <p><b>时长：</b>燕盏 25-35 分钟；燕碎 15-20 分钟。</p>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h3 class="text-sm font-bold text-[#AF7E5A] mb-4 text-center uppercase">📊 燕窝炖煮参数速查表</h3>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>种类</th>
+                                    <th>泡发时间</th>
+                                    <th>炖煮时间</th>
+                                    <th>口感特点</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>燕盏/条</td><td>3-4 小时</td><td>25-35 分钟</td><td>有弹性</td></tr>
+                                <tr><td>燕碎</td><td>2-3 小时</td><td>15-20 分钟</td><td>较软</td></tr>
+                                <tr><td>燕角</td><td>4-5 小时</td><td>35-40 分钟</td><td>质地硬</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 联系方式弹窗 (带 WhatsApp) -->
+    <div id="modal-contact" class="modal-container">
+        <div class="absolute inset-0 bg-black/80" onclick="closeModal('modal-contact')"></div>
+        <div class="modal-inner absolute bottom-0 left-0 right-0 bg-white rounded-t-[3rem] p-10 text-center">
+            <div class="w-12 h-1.5 bg-black/10 mx-auto mb-8 rounded-full"></div>
+            <h2 class="text-2xl font-serif mb-8 text-[#3D2B1F]">即刻开启纯净滋补</h2>
+            <div class="space-y-4 max-w-sm mx-auto">
+                <!-- 微信 -->
+                <div onclick="copyText('TAIBAINANLU', this)" class="bg-gray-50 p-6 rounded-[2.5rem] flex items-center justify-between cursor-pointer active:scale-95 transition-all border border-black/5">
+                    <div class="text-left">
+                        <p class="text-[10px] opacity-40 uppercase font-bold">WeChat 微信</p>
+                        <p class="font-bold">TAIBAINANLU</p>
+                    </div>
+                    <span class="text-[#AF7E5A] text-xs font-bold">点击复制</span>
+                </div>
+                <!-- WhatsApp -->
+                <div onclick="copyText('+62 81286965630', this)" class="bg-gray-50 p-6 rounded-[2.5rem] flex items-center justify-between cursor-pointer active:scale-95 transition-all border border-black/5">
+                    <div class="text-left">
+                        <p class="text-[10px] opacity-40 uppercase font-bold">WhatsApp</p>
+                        <p class="font-bold">+62 81286965630</p>
+                    </div>
+                    <span class="text-[#AF7E5A] text-xs font-bold">点击复制</span>
+                </div>
+            </div>
+            <div class="h-10"></div>
+        </div>
+    </div>
+
+    <!-- 底部悬浮导航 -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-lg">
+        <div class="glass-nav rounded-[2.5rem] p-2.5 flex justify-between items-center shadow-2xl">
+            <button onclick="openModal('modal-category')" class="flex-1 flex flex-col items-center gap-1.5 py-1 opacity-60 hover:opacity-100 transition-all">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span class="text-[10px] font-bold">分类图</span>
+            </button>
+            <button onclick="openModal('modal-qa')" class="flex-1 flex flex-col items-center gap-1.5 py-1 opacity-60 hover:opacity-100 transition-all border-x border-black/5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path></svg>
+                <span class="text-[10px] font-bold">知识Q&A</span>
+            </button>
+            <button onclick="openModal('modal-cook')" class="flex-1 flex flex-col items-center gap-1.5 py-1 opacity-60 hover:opacity-100 transition-all">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20"></path><path d="M2 12h20"></path></svg>
+                <span class="text-[10px] font-bold">炖煮指南</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { id: 1, name: "干挑金丝大盏", price: 17.5, tag: "顶级工艺", desc: "大盏饱满，燕丝粗壮，顺丰特快直达。", imgs: ["https://images.unsplash.com/photo-1542314831-068cd1dbfeeb", "https://images.unsplash.com/photo-1505576399279-565b52d4ac71"] },
+            { id: 2, name: "干挑金丝小盏", price: 17.0, tag: "精致之选", desc: "盏形精巧，泡发率优异。", imgs: ["https://images.unsplash.com/photo-1615485242231-973f5a100bc1", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb"] },
+            { id: 3, name: "金丝顶级盏", price: 16.5, tag: "口碑之王", desc: "胶质厚实，纹理紧密。", imgs: ["https://images.unsplash.com/photo-1505576399279-565b52d4ac71", "https://images.unsplash.com/photo-1615485242231-973f5a100bc1"] },
+            { id: 4, name: "金丝一级盏", price: 16.0, tag: "日常滋补", desc: "入门首选，营养丰富。", imgs: ["https://images.unsplash.com/photo-1584273143981-43c26a0b3327", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb"] },
+            { id: 5, name: "三角盏", price: 15.5, tag: "超值口感", desc: "质地厚实，Q弹有嚼劲。", imgs: ["https://images.unsplash.com/photo-1505576399279-565b52d4ac71", "https://images.unsplash.com/photo-1615485242231-973f5a100bc1"] },
+            { id: 6, name: "燕条", price: 14.5, tag: "丝长分明", desc: "性价比极高，自用首选。", imgs: ["https://images.unsplash.com/photo-1615485242231-973f5a100bc1", "https://images.unsplash.com/photo-1584273143981-43c26a0b3327"] },
+            { id: 7, name: "燕角", price: 12.5, tag: "口感软糯", desc: "需长泡，口感极其Q弹。", imgs: ["https://images.unsplash.com/photo-1542314831-068cd1dbfeeb", "https://images.unsplash.com/photo-1505576399279-565b52d4ac71"] },
+            { id: 8, name: "燕碎", price: 11.0, tag: "实惠入门", desc: "实惠之选，适合奶茶或甜品。", imgs: ["https://images.unsplash.com/photo-1584273143981-43c26a0b3327", "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb"] }
+        ];
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = products.map(p => `
+                <div onclick="openGallery(${p.id})" class="bg-[#4A382C] p-5 rounded-[2.5rem] flex flex-col justify-between h-[200px] shadow-lg active:scale-95 transition-all cursor-pointer">
+                    <div>
+                        <h3 class="text-white text-base font-bold mb-1">${p.name}</h3>
+                        <p class="text-[9px] text-[#AF7E5A] font-bold uppercase tracking-wider">${p.tag}</p>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div class="flex flex-col">
+                            <span class="text-[8px] text-white/30 italic">CNY/Gram</span>
+                            <span class="text-xl font-serif text-white">¥${p.price.toFixed(1)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function openGallery(id) {
+            const p = products.find(i => i.id === id);
+            document.getElementById('detail-name').innerText = p.name;
+            document.getElementById('detail-price').innerText = '¥' + p.price.toFixed(1);
+            document.getElementById('detail-desc').innerText = p.desc;
+            const scroller = document.getElementById('gallery-scroller');
+            const dots = document.getElementById('gallery-dots');
+            scroller.innerHTML = p.imgs.map(url => `<div class="carousel-item"><img src="${url}?auto=format&fit=crop&w=800" class="w-full h-full object-cover"></div>`).join('');
+            dots.innerHTML = p.imgs.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('');
+            scroller.onscroll = () => {
+                const index = Math.round(scroller.scrollLeft / scroller.clientWidth);
+                Array.from(dots.children).forEach((dot, i) => dot.classList.toggle('active', i === index));
+            };
+            openModal('modal-gallery');
+            scroller.scrollLeft = 0;
+        }
+
+        function copyText(text, btn) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            const originalText = btn.querySelector('.text-[#AF7E5A]').innerText;
+            btn.querySelector('.text-[#AF7E5A]').innerText = '已复制!';
+            btn.querySelector('.text-[#AF7E5A]').style.color = '#07C160';
+            setTimeout(() => {
+                btn.querySelector('.text-[#AF7E5A]').innerText = originalText;
+                btn.querySelector('.text-[#AF7E5A]').style.color = '#AF7E5A';
+            }, 1500);
+        }
+
+        window.onload = renderProducts;
+    </script>
+</body>
+</html>
+
